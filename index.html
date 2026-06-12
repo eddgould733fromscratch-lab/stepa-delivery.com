@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Стёпа.Доставка</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { padding: 20px; background: #fdfdfd; color: #333; max-width: 600px; margin: 0 auto; }
+        
+        /* Логотип */
+        header { padding-bottom: 15px; border-bottom: 2px solid #333; margin-bottom: 20px; }
+        .logo { width: 142px; height: 21px; object-fit: contain; }
+
+        h1 { font-size: 20px; margin-bottom: 15px; color: #111; }
+        
+        /* Условия */
+        .info-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; color: #856404; }
+        .info-box ul { margin-left: 18px; margin-top: 5px; }
+
+        /* Таблица выбора товаров */
+        .order-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .order-table th, .order-table td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        .order-table th { background: #f1f1f1; font-size: 14px; }
+        .counter-btn { width: 28px; height: 28px; border: 1px solid #999; background: #fff; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .counter-btn:hover { background: #eee; }
+        .count-val { display: inline-block; width: 30px; text-align: center; font-weight: bold; }
+
+        /* Окно с готовым текстом */
+        .result-box { background: #fafafa; border: 1px solid #ccc; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap; margin-bottom: 20px; line-height: 1.4; }
+
+        /* Главная кнопка */
+        .action-btn { display: block; width: 100%; background: #28a745; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; text-decoration: none; }
+        .action-btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="stepadeliverylogo.png" alt="СТЁПА.Доставка" class="logo">
+    </header>
+
+    <h1>Заказ для ЖК Каменные Палатки</h1>
+
+    <div class="info-box">
+        <strong>Правила доставки Стёпы:</strong>
+        <ul>
+            <li>📍 Выдача строго у входных ворот ЖК "Каменные Палатки".</li>
+            <li>⏰ Работаем каждый день с 12:00 до 21:00.</li>
+            <li>💵 Оплата наличными или переводом строго при встрече!</li>
+        </ul>
+    </div>
+
+    <!-- Простая таблица товаров, которая никогда не зависнет -->
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Цена</th>
+                <th style="text-align: center; width: 110px;">Количество</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Яблоко спелое</td>
+                <td>15,50 руб.</td>
+                <td style="text-align: center;">
+                    <button class="counter-btn" onclick="changeQty('apple', -1)">-</button>
+                    <span class="count-val" id="qty-apple">0</span>
+                    <button class="counter-btn" onclick="changeQty('apple', 1)">+</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Шариковая ручка</td>
+                <td>25,00 руб.</td>
+                <td style="text-align: center;">
+                    <button class="counter-btn" onclick="changeQty('pen', -1)">-</button>
+                    <span class="count-val" id="qty-pen">0</span>
+                    <button class="counter-btn" onclick="changeQty('pen', 1)">+</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Батарейка Alcatel AAA</td>
+                <td>49,99 руб.</td>
+                <td style="text-align: center;">
+                    <button class="counter-btn" onclick="changeQty('battery', -1)">-</button>
+                    <span class="count-val" id="qty-battery">0</span>
+                    <button class="counter-btn" onclick="changeQty('battery', 1)">+</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Иголка от кактуса</td>
+                <td>999,00 руб.</td>
+                <td style="text-align: center;">
+                    <button class="counter-btn" onclick="changeQty('cactus', -1)">-</button>
+                    <span class="count-val" id="qty-cactus">0</span>
+                    <button class="counter-btn" onclick="changeQty('cactus', 1)">+</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 style="font-size: 16px; margin-bottom: 10px;">Твой готовый список для Стёпы:</h2>
+    <!-- Сюда мгновенно пишется строка в твоем формате -->
+    <div class="result-box" id="resultText">Список пуст. Добавь товары выше!</div>
+
+    <!-- Кнопка, которая просто копирует текст, чтобы друг сразу скинул его тебе -->
+    <button class="action-btn" onclick="copyOrder()">Скопировать список заказа</button>
+
+    <script>
+        // Простая база данных прямо в коде
+        const products = {
+            apple: { name: "Яблоко спелое", price: 15.50, qty: 0 },
+            pen: { name: "Шариковая ручка", price: 25.00, qty: 0 },
+            battery: { name: "Батарейка Alcatel AAA", price: 49.99, qty: 0 },
+            cactus: { name: "Иголка от кактуса (коллекционная)", price: 999.00, qty: 0 }
+        };
+
+        // Изменение количества по кнопкам + и -
+        function changeQty(key, val) {
+            let currentQty = products[key].qty + val;
+            if (currentQty < 0) currentQty = 0;
+            products[key].qty = currentQty;
+            
+            document.getElementById('qty-' + key).innerText = currentQty;
+            updateResultString();
+        }
+
+        // Сборка твоей фирменной строки
+        function updateResultString() {
+            let totalSum = 0;
+            let listString = "Список: ";
+            let hasItems = false;
+            let index = 1;
+
+            for (let key in products) {
+                let item = products[key];
+                if (item.qty > 0) {
+                    hasItems = true;
+                    let itemSum = item.price * item.qty;
+                    totalSum += itemSum;
+                    
+                    let priceStr = item.price.toFixed(2).replace('.', ',');
+                    let sumStr = itemSum.toFixed(2).replace('.', ',');
+                    
+                    listString += index + ". " + item.name + ". Стоимость за 1 шт.: " + priceStr + " руб.. Количество товаров: " + item.qty + ". Сумма: " + sumStr + " руб..";
+                    index++;
+                }
+            }
+
+            if (!hasItems) {
+                document.getElementById('resultText').innerText = "Список пуст. Добавь товары выше!";
+                return;
+            }
+
+            let totalSumStr = totalSum.toFixed(2).replace('.', ',');
+            listString += " Итоговая сумма заказа: " + totalSumStr + " руб..";
+            
+            document.getElementById('resultText').innerText = listString;
+        }
+
+        // Функция копирования в буфер обмена
+        function copyOrder() {
+            const text = document.getElementById('resultText').innerText;
+            if (text.indexOf('Список пуст') !== -1) {
+                alert('Сначала добавь товары в список!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Список скопирован! Отправь его Стёпе в Telegram или на почту, чтобы начать болтать.');
+            }).catch(function() {
+                alert('Не удалось скопировать автоматически. Выдели текст пальцем и скопируй сам!');
+            });
+        }
+    </script>
+</body>
+</html>
