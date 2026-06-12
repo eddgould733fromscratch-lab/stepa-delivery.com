@@ -37,7 +37,7 @@
 <body>
 
     <header>
-        <img src="stepadeliverylogo.svg" alt="СТЁПА.Доставка" class="logo">
+        <img id="delivery-logo" src="stepadeliverylogo.svg" alt="Стёпа.Доставка Логотип" style="max-width: 100%; height: auto;">
     </header>
 
     <h1>Заказ для ЖК Каменные Палатки</h1>
@@ -64,7 +64,7 @@
         <tbody>
             <tr>
                 <td>Яблоко спелое</td>
-                <td>15,50 руб.</td>
+                <td>13,64 руб.</td>
                 <td style="text-align: center;">
                     <button class="counter-btn" onclick="changeQty('apple', -1)">-</button>
                     <span class="count-val" id="qty-apple">0</span>
@@ -91,7 +91,7 @@
             </tr>
             <tr>
                 <td>Иголка от кактуса</td>
-                <td>999,00 руб.</td>
+                <td>499,50 руб.</td>
                 <td style="text-align: center;">
                     <button class="counter-btn" onclick="changeQty('cactus', -1)">-</button>
                     <span class="count-val" id="qty-cactus">0</span>
@@ -104,6 +104,10 @@
     <h2 style="font-size: 16px; margin-bottom: 10px;">Твой готовый список для Стёпы:</h2>
     <!-- Сюда мгновенно пишется строка в твоем формате -->
     <div class="result-box" id="resultText">Список пуст. Добавь товары выше!</div>
+<div style="margin: 15px 0;">
+    <input type="text" id="promoInput" placeholder="Введите промокод" oninput="updateResultString()" style="padding: 5px; uppercase;">
+    <span id="promoStatus" style="margin-left: 10px; font-weight: bold;"></span>
+</div>
 
     <!-- Кнопка, которая просто копирует текст, чтобы друг сразу скинул его тебе -->
     <button class="action-btn" onclick="copyOrder()">Скопировать список заказа</button>
@@ -112,12 +116,11 @@
 <script>
     // Простая база данных прямо в коде
     const products = {
-        apple: { name: "Яблоко спелое", price: 15.50, qty: 0 },
-        pen: { name: "Шариковая ручка", price: 25.00, qty: 0 },
-        battery: { name: "Батарейка Alcatel AAA", price: 49.99, qty: 0 },
-        cactus: { name: "Иголка от кактуса (коллекционная)", price: 999.00, qty: 0 }
-    };
-
+    apple: { name: "Яблоко спелое", price: 13.64, qty: 0, discount: 12 }, // Скидка 12%
+    pen: { name: "Шариковая ручка", price: 25.00, qty: 0, discount: 0 },
+    battery: { name: "Батарейка Alcatel AAA", price: 49.99, qty: 0, discount: 0 },
+    cactus: { name: "Иголка от кактуса (коллекционная)", price: 499.50, qty: 0, discount: 50 } // Скидка 50%!
+};
     // Глобальная переменная для хранения текста заказа
     let currentOrderText = "";
 
@@ -132,43 +135,81 @@
     }
 
     // Сборка фирменной строки
-    function updateResultString() {
-        let totalSum = 0;
-        let listString = "📦 Ваш заказ:\n"; // Начинаем с красивого заголовка и переноса строки
-        let hasItems = false;
-        let index = 1;
+function updateResultString() {
+    let totalSum = 0;
+    let listString = "📦 Ваш заказ:\n"; 
+    let hasItems = false;
+    let index = 1;
 
-        for (let key in products) {
-            let item = products[key];
-            if (item.qty > 0) {
-                hasItems = true;
-                let itemSum = item.price * item.qty;
-                totalSum += itemSum;
-                
-                let priceStr = item.price.toFixed(2).replace('.', ',');
-                let sumStr = itemSum.toFixed(2).replace('.', ',');
-                
-                // Форматируем каждую позицию с новой строки и убираем двойные точки
-                listString += index + ". " + item.name + "\n   Цена: " + priceStr + " руб. | Кол-во: " + item.qty + " шт. | Сумма: " + sumStr + " руб.\n";
-                index++;
-            }
+    // 1. Сначала считаем товары с учётом их личных скидок (если они есть в products)
+    for (let key in products) {
+        let item = products[key];
+        if (item.qty > 0) {
+            hasItems = true;
+            
+            // Проверяем индивидуальную скидку товара (если свойства нет, считаем как 0)
+            let itemDiscount = item.discount || 0;
+            let finalPrice = item.price * (1 - itemDiscount / 100);
+            
+            let itemSum = finalPrice * item.qty;
+            totalSum += itemSum;
+            
+            let priceStr = finalPrice.toFixed(2).replace('.', ',');
+            let sumStr = itemSum.toFixed(2).replace('.', ',');
+            
+            let discountInfo = itemDiscount > 0 ? ` (скидка ${itemDiscount}%)` : "";
+            
+            listString += index + ". " + item.name + discountInfo + "\n   Цена: " + priceStr + " руб. | Кол-во: " + item.qty + " шт. | Сумма: " + sumStr + " руб.\n";
+            index++;
         }
-
-        if (!hasItems) {
-            currentOrderText = "";
-            document.getElementById('resultText').innerText = "Список пуст. Добавь товары выше!";
-            return;
-        }
-
-        let totalSumStr = totalSum.toFixed(2).replace('.', ',');
-        // Добавляем итог на отдельную строчку
-        listString += "\n💵 Итоговая сумма заказа: " + totalSumStr + " руб.";
-        
-        // Сохраняем и выводим на экран
-        currentOrderText = listString;
-        document.getElementById('resultText').innerText = listString;
     }
 
+    if (!hasItems) {
+        currentOrderText = "";
+        document.getElementById('resultText').innerText = "Список пуст. Добавь товары выше!";
+        if(document.getElementById('promoStatus')) document.getElementById('promoStatus').innerText = "";
+        return;
+    }
+
+    // 2. Проверяем ввод промокода СТЁПА2015
+    let promoInput = document.getElementById('promoInput');
+    let promoValue = promoInput ? promoInput.value.trim().toUpperCase() : "";
+    let promoStatus = document.getElementById('promoStatus');
+    let promoDiscountPercent = 0;
+    let promoText = "";
+
+    // Если ввели промокод СТЁПА2015 (работает и с Е, и с Ё для удобства клиентов)
+    if (promoValue === "СТЁПА2015" || promoValue === "СТЕПА2015") {
+        promoDiscountPercent = 15; // Устанавливаем скидку 15% по промокоду
+        if (promoStatus) {
+            promoStatus.innerText = "🎉 Промокод СТЁПА2015 применён! Скидка 15%";
+            promoStatus.style.color = "green";
+        }
+        
+        // Пересчитываем общую сумму с учётом скидки по промокоду
+        totalSum = totalSum * (1 - promoDiscountPercent / 100);
+        promoText = `\n🔥 Применён промокод: СТЁПА2015 (-15%)`;
+    } else if (promoValue !== "") {
+        if (promoStatus) {
+            promoStatus.innerText = "❌ Неверный промокод";
+            promoStatus.style.color = "red";
+        }
+    } else {
+        if (promoStatus) promoStatus.innerText = "";
+    }
+
+    let totalSumStr = totalSum.toFixed(2).replace('.', ',');
+    
+    // Добавляем инфо о промокоде (если он сработал) и итоговую сумму
+    if (promoText !== "") {
+        listString += promoText + "\n";
+    }
+    listString += "\n💵 Итоговая сумма заказа: " + totalSumStr + " руб.";
+    
+    // Сохраняем и выводим на экран
+    currentOrderText = listString;
+    document.getElementById('resultText').innerText = listString;
+}
     // Функция копирования в буфер обмена
     function copyOrder() {
         const text = document.getElementById('resultText').innerText;
@@ -203,6 +244,22 @@
         // Запуск почтового приложения у клиента
         window.location.href = "mailto:" + to + "?subject=" + subject + "&body=" + body;
     }
+    // Функция, которая автоматически проверяет дату и меняет логотип
+function checkHolidayLogo() {
+    const today = new Date();
+    const day = today.getDate();       // Получаем текущее число (например, 12)
+    const month = today.getMonth();    // Получаем месяц (в JS месяцы считаются с 0, поэтому июнь — это 5)
+
+    // Проверяем: число равно 12, а месяц равен 5 (июнь)
+    if (day === 12 && month === 5) {
+        // Если сегодня 12 июня, меняем обычный логотип на праздничный в честь Дня Создания
+        document.getElementById('delivery-logo').src = "stepadeliverycreatingdaylogo.svg";
+    }
+}
+
+// Запускаем проверку сразу при загрузке страницы
+checkHolidayLogo();
+
 </script>
 </body>
 </html>
