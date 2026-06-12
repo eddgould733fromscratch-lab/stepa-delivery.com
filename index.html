@@ -107,73 +107,102 @@
 
     <!-- Кнопка, которая просто копирует текст, чтобы друг сразу скинул его тебе -->
     <button class="action-btn" onclick="copyOrder()">Скопировать список заказа</button>
+    <button class="action-btn" onclick="sendEmail()">📧 Отправить заказ на почту</button>
 
-    <script>
-        // Простая база данных прямо в коде
-        const products = {
-            apple: { name: "Яблоко спелое", price: 15.50, qty: 0 },
-            pen: { name: "Шариковая ручка", price: 25.00, qty: 0 },
-            battery: { name: "Батарейка Alcatel AAA", price: 49.99, qty: 0 },
-            cactus: { name: "Иголка от кактуса (коллекционная)", price: 999.00, qty: 0 }
-        };
+<script>
+    // Простая база данных прямо в коде
+    const products = {
+        apple: { name: "Яблоко спелое", price: 15.50, qty: 0 },
+        pen: { name: "Шариковая ручка", price: 25.00, qty: 0 },
+        battery: { name: "Батарейка Alcatel AAA", price: 49.99, qty: 0 },
+        cactus: { name: "Иголка от кактуса (коллекционная)", price: 999.00, qty: 0 }
+    };
 
-        // Изменение количества по кнопкам + и -
-        function changeQty(key, val) {
-            let currentQty = products[key].qty + val;
-            if (currentQty < 0) currentQty = 0;
-            products[key].qty = currentQty;
-            
-            document.getElementById('qty-' + key).innerText = currentQty;
-            updateResultString();
+    // Глобальная переменная для хранения текста заказа
+    let currentOrderText = "";
+
+    // Изменение количества по кнопкам + и -
+    function changeQty(key, val) {
+        let currentQty = products[key].qty + val;
+        if (currentQty < 0) currentQty = 0;
+        products[key].qty = currentQty;
+        
+        document.getElementById('qty-' + key).innerText = currentQty;
+        updateResultString();
+    }
+
+    // Сборка фирменной строки
+    function updateResultString() {
+        let totalSum = 0;
+        let listString = "📦 Ваш заказ:\n"; // Начинаем с красивого заголовка и переноса строки
+        let hasItems = false;
+        let index = 1;
+
+        for (let key in products) {
+            let item = products[key];
+            if (item.qty > 0) {
+                hasItems = true;
+                let itemSum = item.price * item.qty;
+                totalSum += itemSum;
+                
+                let priceStr = item.price.toFixed(2).replace('.', ',');
+                let sumStr = itemSum.toFixed(2).replace('.', ',');
+                
+                // Форматируем каждую позицию с новой строки и убираем двойные точки
+                listString += index + ". " + item.name + "\n   Цена: " + priceStr + " руб. | Кол-во: " + item.qty + " шт. | Сумма: " + sumStr + " руб.\n";
+                index++;
+            }
         }
 
-        // Сборка твоей фирменной строки
-        function updateResultString() {
-            let totalSum = 0;
-            let listString = "Список: ";
-            let hasItems = false;
-            let index = 1;
-
-            for (let key in products) {
-                let item = products[key];
-                if (item.qty > 0) {
-                    hasItems = true;
-                    let itemSum = item.price * item.qty;
-                    totalSum += itemSum;
-                    
-                    let priceStr = item.price.toFixed(2).replace('.', ',');
-                    let sumStr = itemSum.toFixed(2).replace('.', ',');
-                    
-                    listString += index + ". " + item.name + ". Стоимость за 1 шт.: " + priceStr + " руб.. Количество товаров: " + item.qty + ". Сумма: " + sumStr + " руб..";
-                    index++;
-                }
-            }
-
-            if (!hasItems) {
-                document.getElementById('resultText').innerText = "Список пуст. Добавь товары выше!";
-                return;
-            }
-
-            let totalSumStr = totalSum.toFixed(2).replace('.', ',');
-            listString += " Итоговая сумма заказа: " + totalSumStr + " руб..";
-            
-            document.getElementById('resultText').innerText = listString;
+        if (!hasItems) {
+            currentOrderText = "";
+            document.getElementById('resultText').innerText = "Список пуст. Добавь товары выше!";
+            return;
         }
 
-        // Функция копирования в буфер обмена
-        function copyOrder() {
-            const text = document.getElementById('resultText').innerText;
-            if (text.indexOf('Список пуст') !== -1) {
-                alert('Сначала добавь товары в список!');
-                return;
-            }
-            
-            navigator.clipboard.writeText(text).then(function() {
-                alert('Список скопирован! Отправь его Стёпе по СМС или на почту, чтобы начать болтать.');
-            }).catch(function() {
-                alert('Не удалось скопировать автоматически. Выдели текст пальцем и скопируй сам!');
-            });
+        let totalSumStr = totalSum.toFixed(2).replace('.', ',');
+        // Добавляем итог на отдельную строчку
+        listString += "\n💵 Итоговая сумма заказа: " + totalSumStr + " руб.";
+        
+        // Сохраняем и выводим на экран
+        currentOrderText = listString;
+        document.getElementById('resultText').innerText = listString;
+    }
+
+    // Функция копирования в буфер обмена
+    function copyOrder() {
+        const text = document.getElementById('resultText').innerText;
+        if (text.indexOf('Список пуст') !== -1 || currentOrderText === "") {
+            alert('Сначала добавь товары в список!');
+            return;
         }
-    </script>
+        
+        navigator.clipboard.writeText(currentOrderText).then(function() {
+            alert('Список скопирован! Отправь его Стёпе по СМС или на почту, чтобы начать болтать.');
+        }).catch(function() {
+            alert('Не удалось скопировать автоматически. Выдели текст пальцем и скопируй сам!');
+        });
+    }
+
+    // Твоя новая функция для быстрой отправки на почту
+    function sendEmail() {
+        if (currentOrderText === "") {
+            alert('Сначала добавь товары в список!');
+            return;
+        }
+        
+        // Твои контакты: основной и резервный ящики
+        let to = "stepan.bobov@yandex.ru,eddgould733fromscratch@gmail.com";
+        
+        // Тема письма
+        let subject = encodeURIComponent("Новый заказ в ЖК Каменные Палатки");
+        
+        // Закодированный текст заказа с сохранением всех переносов строк
+        let body = encodeURIComponent(currentOrderText); 
+
+        // Запуск почтового приложения у клиента
+        window.location.href = "mailto:" + to + "?subject=" + subject + "&body=" + body;
+    }
+</script>
 </body>
 </html>
